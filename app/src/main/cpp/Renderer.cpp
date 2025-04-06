@@ -101,17 +101,19 @@ Renderer::~Renderer() {
 }
 
 /*!
- * [0, width] -> [-1, 1]
+ * [0, width] -> [-2 * aspect, 2 * aspect]
  */
 float Renderer::toGlCoordX(float x) {
-    return x;
+    float aspect = (float) width_ / height_;
+
+    return 4.f * aspect * x / width_ - 2 * aspect;
 }
 
 /*!
- * [0, height] -> [-1, 1]
+ * [0, height] -> [-2, 2]
  */
 float Renderer::toGlCoordY(float y) {
-    return y;
+    return 2.f - 4.f * y / height_;
 }
 
 Model Renderer::makeTextureModel(float x, float y, float width, float height, const std::string & assetPath) {
@@ -188,11 +190,11 @@ void Renderer::render() {
     // Render top bar (result + restart button)
 
     // Render game table
-    float padding = 0.15f;
-    float game_table_width = 2.f - 2.f * padding;
-    float game_table_height = 2.f - 2.f * padding;
-    float game_table_x = -1.f + padding;
-    float game_table_y = -1.f + padding;
+    float padding = 40.f;
+    float game_table_width = std::min(width_, height_) - 2.f * padding;
+    float game_table_height = std::min(width_, height_) - 2.f * padding;
+    float game_table_x = padding;
+    float game_table_y = height_ / 2 - game_table_height / 2;
     float dx = game_table_width / game_.getTableData().getWidth();
     float dy = game_table_height / game_.getTableData().getHeight();
 
@@ -212,7 +214,7 @@ void Renderer::render() {
                     break;
             }
 
-            Model model = makeTextureModel(game_table_x + dx * x, game_table_y + dx * y, dx, dy, assetPath);
+            Model model = makeTextureModel(game_table_x + dx * x, game_table_y + dy * y, dx, dy, assetPath);
             texture_shader_->drawModel(model);
         }
     }
