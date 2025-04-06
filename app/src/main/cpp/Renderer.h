@@ -60,6 +60,11 @@ private:
      */
     void createModels();
 
+    Model makeTextureModel(float x, float y, float width, float height, const std::string & assetPath);
+
+    float toGlCoordX(float y);
+    float toGlCoordY(float y);
+
     android_app *app_;
     EGLDisplay display_;
     EGLSurface surface_;
@@ -69,7 +74,7 @@ private:
 
     bool shaderNeedsNewProjectionMatrix_;
 
-    std::unique_ptr<Shader> shader_;
+    std::unique_ptr<Shader> texture_shader_;
     std::vector<Model> models_;
 
     Game game_;

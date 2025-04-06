@@ -100,6 +100,54 @@ Renderer::~Renderer() {
     }
 }
 
+/*!
+ * [0, width] -> [-1, 1]
+ */
+float Renderer::toGlCoordX(float x) {
+    return 2.f * x / width_ - 1.f;
+}
+
+/*!
+ * [0, height] -> [-1, 1]
+ */
+float Renderer::toGlCoordY(float y) {
+    return 2.f * y / height_ - 1.f;
+}
+
+Model Renderer::makeTextureModel(float x, float y, float width, float height, const std::string & assetPath) {
+    /*
+     * This is a square:
+     * 0 --- 1
+     * | \   |
+     * |  \  |
+     * |   \ |
+     * 3 --- 2
+     */
+    float xm = toGlCoordX(x);
+    float xp = toGlCoordX(x + width);
+    float ym = toGlCoordY(y);
+    float yp = toGlCoordY(y + height);
+    std::vector<Vertex> vertices = {
+            Vertex(Vector3{xp, yp, 0}, Vector2{0, 0}), // 0
+            Vertex(Vector3{xm, yp, 0}, Vector2{1, 0}), // 1
+            Vertex(Vector3{xm, ym, 0}, Vector2{1, 1}), // 2
+            Vertex(Vector3{xp, ym, 0}, Vector2{0, 1}) // 3
+    };
+    std::vector<Index> indices = {
+            0, 1, 2, 0, 2, 3
+    };
+
+    // loads an image and assigns it to the square.
+    //
+    // Note: there is no texture management in this sample, so if you reuse an image be careful not
+    // to load it repeatedly. Since you get a shared_ptr you can safely reuse it in many models.
+    auto assetManager = app_->activity->assetManager;
+    auto spAndroidRobotTexture = TextureAsset::loadAsset(assetManager, assetPath.c_str());
+
+    // Create a model and put it in the back of the render list.
+    return { vertices, indices, spAndroidRobotTexture };
+}
+
 void Renderer::render() {
     // Check to see if the surface has changed size. This is _necessary_ to do every frame when
     // using immersive mode as you'll get no other notification that your renderable area has
@@ -124,7 +172,7 @@ void Renderer::render() {
         // send the matrix to the shader
         // Note: the shader must be active for this to work. Since we only have one shader for this
         // demo, we can assume that it's active.
-        shader_->setProjectionMatrix(projectionMatrix);
+        texture_shader_->setProjectionMatrix(projectionMatrix);
 
         // make sure the matrix isn't generated every frame
         shaderNeedsNewProjectionMatrix_ = false;
@@ -136,11 +184,44 @@ void Renderer::render() {
     // Render all the models. There's no depth testing in this sample so they're accepted in the
     // order provided. But the sample EGL setup requests a 24 bit depth buffer so you could
     // configure it at the end of initRenderer
-    if (!models_.empty()) {
-        for (const auto &model: models_) {
-            shader_->drawModel(model);
+
+    // Render top bar (result + restart button)
+    float top_bar_width = width_;
+    float top_bar_height = 100.f;
+    float top_bar_x = 0;
+    float top_bar_y = height_ - top_bar_height;
+
+    // Render game table
+    float padding = 10.f;
+    float game_table_width = width_ - 2.f * padding;
+    float game_table_height = game_table_width;
+    float game_table_x = padding;
+    float game_table_y = height_ / 2 - top_bar_height / 2;
+    float dx = game_table_width / game_.getTableData().getWidth();
+    float dy = game_table_height / game_.getTableData().getHeight();
+
+    for (std::size_t x = 0; x < game_.getTableData().getWidth(); x++) {
+        for (std::size_t y = 0; y < game_.getTableData().getHeight(); y++) {
+            std::string assetPath;
+
+            switch (game_.getTableData().getCell(x, y)) {
+                case TIC:
+                    assetPath = "tic.png";
+                    break;
+                case TAC:
+                    assetPath = "tac.png";
+                    break;
+                case TOE:
+                    assetPath = "toe.png";
+                    break;
+            }
+
+            Model model = makeTextureModel(game_table_x + dx * x, game_table_y + dx * y, dx, dy, assetPath);
+            texture_shader_->drawModel(model);
         }
     }
+
+    // Render bottom bar (set up table size)
 
     // Present the rendered image. This is an implicit glFlush.
     auto swapResult = eglSwapBuffers(display_, surface_);
@@ -220,13 +301,13 @@ void Renderer::initRenderer() {
     PRINT_GL_STRING(GL_VERSION);
     PRINT_GL_STRING_AS_LIST(GL_EXTENSIONS);
 
-    shader_ = std::unique_ptr<Shader>(
+    texture_shader_ = std::unique_ptr<Shader>(
             Shader::loadShader(vertex, fragment, "inPosition", "inUV", "uProjection"));
-    assert(shader_);
+    assert(texture_shader_);
 
     // Note: there's only one shader in this demo, so I'll activate it here. For a more complex game
     // you'll want to track the active shader and activate/deactivate it as necessary
-    shader_->activate();
+    texture_shader_->activate();
 
     // setup any other gl related global states
     glClearColor(CORNFLOWER_BLUE);
@@ -260,57 +341,6 @@ void Renderer::updateRenderArea() {
  * @brief Create any demo models we want for this demo.
  */
 void Renderer::createModels() {
-    for (std::size_t x = 0; x < game_.getTableData().getWidth(); x++) {
-        for (std::size_t y = 0; y < game_.getTableData().getHeight(); y++) {
-            std::string assetPath;
-
-            switch (game_.getTableData().getCell(x, y)) {
-                case TIC:
-                    assetPath = "tic.png";
-                    break;
-                case TAC:
-                    assetPath = "tac.png";
-                    break;
-                case TOE:
-                    assetPath = "toe.png";
-                    break;
-            }
-
-            /*
-             * This is a square:
-             * 0 --- 1
-             * | \   |
-             * |  \  |
-             * |   \ |
-             * 3 --- 2
-             */
-            float xm = (float) x * 2.f / game_.getTableData().getWidth() - 1.f;
-            float xp = (float) (x + 1) * 2.f / game_.getTableData().getWidth() - 1.f;
-            float ym = (float) y * 2.f / game_.getTableData().getHeight() - 1.f;
-            float yp = (float) (y + 1) * 2.f / game_.getTableData().getHeight() - 1.f;
-            std::vector<Vertex> vertices = {
-                    Vertex(Vector3{xp, yp, 0}, Vector2{0, 0}), // 0
-                    Vertex(Vector3{xm, yp, 0}, Vector2{1, 0}), // 1
-                    Vertex(Vector3{xm, ym, 0}, Vector2{1, 1}), // 2
-                    Vertex(Vector3{xp, ym, 0}, Vector2{0, 1}) // 3
-            };
-            std::vector<Index> indices = {
-                    0, 1, 2, 0, 2, 3
-            };
-
-            // loads an image and assigns it to the square.
-            //
-            // Note: there is no texture management in this sample, so if you reuse an image be careful not
-            // to load it repeatedly. Since you get a shared_ptr you can safely reuse it in many models.
-            auto assetManager = app_->activity->assetManager;
-            auto spAndroidRobotTexture = TextureAsset::loadAsset(assetManager, assetPath.c_str());
-
-            // Create a model and put it in the back of the render list.
-            Model model = { vertices, indices, spAndroidRobotTexture };
-
-            models_.push_back(model);
-        }
-    }
 }
 
 void Renderer::handleInput() {
