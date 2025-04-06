@@ -34,7 +34,7 @@ TableData::TableData(android_app * app) {
 TableState TableData::getState() {
     // Horizontal win
     for (std::size_t y = 0; y < this->getHeight(); y++) {
-        for (std::size_t x_start = 0; x_start + WIN_LENGTH < this->getWidth(); x_start++) {
+        for (std::size_t x_start = 0; x_start + WIN_LENGTH <= this->getWidth(); x_start++) {
             auto value = this->getCell(x_start, y);
             bool same = true;
 
@@ -55,7 +55,7 @@ TableState TableData::getState() {
 
     // Vertical win
     for (std::size_t x = 0; x < this->getHeight(); x++) {
-        for (std::size_t y_start = 0; y_start + WIN_LENGTH < this->getHeight(); y_start++) {
+        for (std::size_t y_start = 0; y_start + WIN_LENGTH <= this->getHeight(); y_start++) {
             auto value = this->getCell(x, y_start);
             bool same = true;
 
@@ -75,8 +75,8 @@ TableState TableData::getState() {
     }
 
     // Diagonal ++ win
-    for (std::size_t x_start = 0; x_start + WIN_LENGTH < this->getHeight(); x_start++) {
-        for (std::size_t y_start = 0; y_start + WIN_LENGTH < this->getHeight(); y_start++) {
+    for (std::size_t x_start = 0; x_start + WIN_LENGTH <= this->getHeight(); x_start++) {
+        for (std::size_t y_start = 0; y_start + WIN_LENGTH <= this->getHeight(); y_start++) {
             auto value = this->getCell(x_start, y_start);
             bool same = true;
 
@@ -98,8 +98,8 @@ TableState TableData::getState() {
     }
 
     // Diagonal -- win
-    for (std::size_t x_start = 0; x_start + WIN_LENGTH < this->getHeight(); x_start++) {
-        for (std::size_t y_start = WIN_LENGTH; y_start < this->getHeight(); y_start++) {
+    for (std::size_t x_start = 0; x_start + WIN_LENGTH <= this->getWidth(); x_start++) {
+        for (std::size_t y_start = WIN_LENGTH - 1; y_start < this->getHeight(); y_start++) {
             auto value = this->getCell(x_start, y_start);
             bool same = true;
 

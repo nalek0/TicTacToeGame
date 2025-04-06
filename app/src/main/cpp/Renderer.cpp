@@ -268,7 +268,7 @@ void Renderer::render() {
     TableState tableState = game_.tableData.getState();
     switch (tableState) {
         case TIC_WIN: {
-            Model model = makeTextureModel(0, 0, width_, 100.f, TIC_WIN);
+            Model model = makeTextureModel(0, 0, width_, 100.f, TIC_WIN_TEXTURE);
             texture_shader_->drawModel(model);
 
             break;
