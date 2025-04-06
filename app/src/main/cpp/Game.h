@@ -60,11 +60,13 @@ public:
 
 class Game {
 private:
+    std::size_t step_;
     android_app * app_;
 public:
     TableData tableData;
 
     Game(android_app * app);
+    CellState eventState();
 
 };
 

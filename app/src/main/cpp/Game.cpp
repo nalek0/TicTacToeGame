@@ -160,6 +160,16 @@ CellState TableData::getCell(std::size_t x, std::size_t y) {
 }
 
 Game::Game(android_app * app) {
-    this->app_ = app;
+    app_ = app;
+    step_ = 0;
     tableData = TableData(app);
 }
+
+CellState Game::eventState() {
+    if (step_++ % 2 == 0) {
+        return TIC;
+    } else {
+        return TAC;
+    }
+}
+
