@@ -161,11 +161,5 @@ CellState TableData::getCell(std::size_t x, std::size_t y) {
 
 Game::Game(android_app * app) {
     this->app_ = app;
-    this->_tableData = TableData(app);
+    tableData = TableData(app);
 }
-
-TableData Game::getTableData() {
-    return this->_tableData;
-}
-
-

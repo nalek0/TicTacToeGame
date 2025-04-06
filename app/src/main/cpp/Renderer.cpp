@@ -145,7 +145,7 @@ Model Renderer::makeTextureModel(std::size_t x_ind, std::size_t y_ind) {
     };
 
     // Create a model and put it in the back of the render list.
-    switch (game_.getTableData().getCell(x_ind, y_ind)) {
+    switch (game_.tableData.getCell(x_ind, y_ind)) {
         case TIC:
             return { vertices, indices, tic_texture };
         case TAC:
@@ -161,8 +161,8 @@ float Renderer::getTableCellX(std::size_t x, std::size_t y) {
     float game_table_height = std::min(width_, height_) - 2.f * padding;
     float game_table_x = padding;
     float game_table_y = height_ / 2 - game_table_height / 2;
-    float dx = game_table_width / game_.getTableData().getWidth();
-    float dy = game_table_height / game_.getTableData().getHeight();
+    float dx = game_table_width / game_.tableData.getWidth();
+    float dy = game_table_height / game_.tableData.getHeight();
 
     return game_table_x + dx * x;
 }
@@ -173,8 +173,8 @@ float Renderer::getTableCellY(std::size_t x, std::size_t y) {
     float game_table_height = std::min(width_, height_) - 2.f * padding;
     float game_table_x = padding;
     float game_table_y = height_ / 2 - game_table_height / 2;
-    float dx = game_table_width / game_.getTableData().getWidth();
-    float dy = game_table_height / game_.getTableData().getHeight();
+    float dx = game_table_width / game_.tableData.getWidth();
+    float dy = game_table_height / game_.tableData.getHeight();
 
     return game_table_y + dy * y;
 }
@@ -185,8 +185,8 @@ float Renderer::getTableCellWidth(std::size_t x, std::size_t y) {
     float game_table_height = std::min(width_, height_) - 2.f * padding;
     float game_table_x = padding;
     float game_table_y = height_ / 2 - game_table_height / 2;
-    float dx = game_table_width / game_.getTableData().getWidth();
-    float dy = game_table_height / game_.getTableData().getHeight();
+    float dx = game_table_width / game_.tableData.getWidth();
+    float dy = game_table_height / game_.tableData.getHeight();
 
     return dx;
 }
@@ -197,10 +197,17 @@ float Renderer::getTableCellHeight(std::size_t x, std::size_t y) {
     float game_table_height = std::min(width_, height_) - 2.f * padding;
     float game_table_x = padding;
     float game_table_y = height_ / 2 - game_table_height / 2;
-    float dx = game_table_width / game_.getTableData().getWidth();
-    float dy = game_table_height / game_.getTableData().getHeight();
+    float dx = game_table_width / game_.tableData.getWidth();
+    float dy = game_table_height / game_.tableData.getHeight();
 
     return dy;
+}
+
+bool Renderer::tableCellContains(std::size_t x_ind, std::size_t y_ind, float x, float y) {
+    return getTableCellX(x_ind, y_ind) < x &&
+           getTableCellX(x_ind, y_ind) + getTableCellWidth(x_ind, y_ind) > x &&
+           getTableCellY(x_ind, y_ind) < y &&
+           getTableCellY(x_ind, y_ind) + getTableCellHeight(x_ind, y_ind) > y;
 }
 
 void Renderer::render() {
@@ -243,8 +250,8 @@ void Renderer::render() {
     // Render top bar (result + restart button)
 
     // Render game table
-    for (std::size_t x = 0; x < game_.getTableData().getWidth(); x++) {
-        for (std::size_t y = 0; y < game_.getTableData().getHeight(); y++) {
+    for (std::size_t x = 0; x < game_.tableData.getWidth(); x++) {
+        for (std::size_t y = 0; y < game_.tableData.getHeight(); y++) {
             Model model = makeTextureModel(x, y);
             texture_shader_->drawModel(model);
         }
@@ -407,6 +414,16 @@ void Renderer::handleInput() {
             case AMOTION_EVENT_ACTION_POINTER_DOWN:
                 aout << "(" << pointer.id << ", " << x << ", " << y << ") "
                      << "Pointer Down";
+
+                for (std::size_t x_ind = 0; x_ind < game_.tableData.getWidth(); x_ind++) {
+                    for (std::size_t y_ind = 0; y_ind < game_.tableData.getHeight(); y_ind++) {
+                        if (tableCellContains(x_ind, y_ind, x, y)) {
+                            aout << " [" << x_ind << ", " << y_ind << "]";
+                            game_.tableData.setCell(x_ind, y_ind, TIC);
+                        }
+                    }
+                }
+
                 break;
 
             case AMOTION_EVENT_ACTION_CANCEL:

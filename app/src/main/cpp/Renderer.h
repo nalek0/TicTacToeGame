@@ -65,6 +65,7 @@ private:
     float getTableCellY(std::size_t x, std::size_t y);
     float getTableCellWidth(std::size_t x, std::size_t y);
     float getTableCellHeight(std::size_t x, std::size_t y);
+    bool tableCellContains(std::size_t x_ind, std::size_t y_ind, float x, float y);
 
     float toGlCoordX(float y);
     float toGlCoordY(float y);

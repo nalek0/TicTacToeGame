@@ -60,13 +60,11 @@ public:
 
 class Game {
 private:
-    TableData _tableData;
     android_app * app_;
 public:
+    TableData tableData;
 
     Game(android_app * app);
-
-    TableData getTableData();
 
 };
 
