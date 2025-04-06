@@ -104,14 +104,14 @@ Renderer::~Renderer() {
  * [0, width] -> [-1, 1]
  */
 float Renderer::toGlCoordX(float x) {
-    return 2.f * x / width_ - 1.f;
+    return x;
 }
 
 /*!
  * [0, height] -> [-1, 1]
  */
 float Renderer::toGlCoordY(float y) {
-    return 2.f * y / height_ - 1.f;
+    return y;
 }
 
 Model Renderer::makeTextureModel(float x, float y, float width, float height, const std::string & assetPath) {
@@ -186,17 +186,13 @@ void Renderer::render() {
     // configure it at the end of initRenderer
 
     // Render top bar (result + restart button)
-    float top_bar_width = width_;
-    float top_bar_height = 100.f;
-    float top_bar_x = 0;
-    float top_bar_y = height_ - top_bar_height;
 
     // Render game table
-    float padding = 10.f;
-    float game_table_width = width_ - 2.f * padding;
-    float game_table_height = game_table_width;
-    float game_table_x = padding;
-    float game_table_y = height_ / 2 - top_bar_height / 2;
+    float padding = 0.15f;
+    float game_table_width = 2.f - 2.f * padding;
+    float game_table_height = 2.f - 2.f * padding;
+    float game_table_x = -1.f + padding;
+    float game_table_y = -1.f + padding;
     float dx = game_table_width / game_.getTableData().getWidth();
     float dy = game_table_height / game_.getTableData().getHeight();
 
