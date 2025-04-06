@@ -260,33 +260,57 @@ void Renderer::updateRenderArea() {
  * @brief Create any demo models we want for this demo.
  */
 void Renderer::createModels() {
-    /*
-     * This is a square:
-     * 0 --- 1
-     * | \   |
-     * |  \  |
-     * |   \ |
-     * 3 --- 2
-     */
-    std::vector<Vertex> vertices = {
-            Vertex(Vector3{1, 1, 0}, Vector2{0, 0}), // 0
-            Vertex(Vector3{-1, 1, 0}, Vector2{1, 0}), // 1
-            Vertex(Vector3{-1, -1, 0}, Vector2{1, 1}), // 2
-            Vertex(Vector3{1, -1, 0}, Vector2{0, 1}) // 3
-    };
-    std::vector<Index> indices = {
-            0, 1, 2, 0, 2, 3
-    };
+    for (std::size_t x = 0; x < game_.getTableData().getWidth(); x++) {
+        for (std::size_t y = 0; y < game_.getTableData().getHeight(); y++) {
+            std::string assetPath;
 
-    // loads an image and assigns it to the square.
-    //
-    // Note: there is no texture management in this sample, so if you reuse an image be careful not
-    // to load it repeatedly. Since you get a shared_ptr you can safely reuse it in many models.
-    auto assetManager = app_->activity->assetManager;
-    auto spAndroidRobotTexture = TextureAsset::loadAsset(assetManager, "android_robot.png");
+            switch (game_.getTableData().getCell(x, y)) {
+                case TIC:
+                    assetPath = "tic.png";
+                    break;
+                case TAC:
+                    assetPath = "tac.png";
+                    break;
+                case TOE:
+                    assetPath = "toe.png";
+                    break;
+            }
 
-    // Create a model and put it in the back of the render list.
-    models_.emplace_back(vertices, indices, spAndroidRobotTexture);
+            /*
+             * This is a square:
+             * 0 --- 1
+             * | \   |
+             * |  \  |
+             * |   \ |
+             * 3 --- 2
+             */
+            float xm = (float) x * 2.f / game_.getTableData().getWidth() - 1.f;
+            float xp = (float) (x + 1) * 2.f / game_.getTableData().getWidth() - 1.f;
+            float ym = (float) y * 2.f / game_.getTableData().getHeight() - 1.f;
+            float yp = (float) (y + 1) * 2.f / game_.getTableData().getHeight() - 1.f;
+            std::vector<Vertex> vertices = {
+                    Vertex(Vector3{xp, yp, 0}, Vector2{0, 0}), // 0
+                    Vertex(Vector3{xm, yp, 0}, Vector2{1, 0}), // 1
+                    Vertex(Vector3{xm, ym, 0}, Vector2{1, 1}), // 2
+                    Vertex(Vector3{xp, ym, 0}, Vector2{0, 1}) // 3
+            };
+            std::vector<Index> indices = {
+                    0, 1, 2, 0, 2, 3
+            };
+
+            // loads an image and assigns it to the square.
+            //
+            // Note: there is no texture management in this sample, so if you reuse an image be careful not
+            // to load it repeatedly. Since you get a shared_ptr you can safely reuse it in many models.
+            auto assetManager = app_->activity->assetManager;
+            auto spAndroidRobotTexture = TextureAsset::loadAsset(assetManager, assetPath.c_str());
+
+            // Create a model and put it in the back of the render list.
+            Model model = { vertices, indices, spAndroidRobotTexture };
+
+            models_.push_back(model);
+        }
+    }
 }
 
 void Renderer::handleInput() {

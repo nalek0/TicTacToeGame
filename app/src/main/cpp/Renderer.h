@@ -6,6 +6,7 @@
 
 #include "Model.h"
 #include "Shader.h"
+#include "Game.h"
 
 struct android_app;
 
@@ -21,7 +22,8 @@ public:
             context_(EGL_NO_CONTEXT),
             width_(0),
             height_(0),
-            shaderNeedsNewProjectionMatrix_(true) {
+            shaderNeedsNewProjectionMatrix_(true),
+            game_ (Game(pApp)) {
         initRenderer();
     }
 
@@ -69,6 +71,8 @@ private:
 
     std::unique_ptr<Shader> shader_;
     std::vector<Model> models_;
+
+    Game game_;
 };
 
 #endif //ANDROIDGLINVESTIGATIONS_RENDERER_H
