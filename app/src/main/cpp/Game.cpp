@@ -154,7 +154,7 @@ void TableData::setCell(std::size_t x, std::size_t y, CellState state) {
 
 CellState TableData::getCell(std::size_t x, std::size_t y) {
     assert(x >= 0 && x < this->getWidth());
-    assert(y >= 0 && y < this->getWidth());
+    assert(y >= 0 && y < this->getHeight());
 
     return this->_table[y][x].getState();
 }

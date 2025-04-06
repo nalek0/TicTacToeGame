@@ -60,7 +60,11 @@ private:
      */
     void createModels();
 
-    Model makeTextureModel(float x, float y, float width, float height, const std::string & assetPath);
+    Model makeTextureModel(std::size_t x, std::size_t y);
+    float getTableCellX(std::size_t x, std::size_t y);
+    float getTableCellY(std::size_t x, std::size_t y);
+    float getTableCellWidth(std::size_t x, std::size_t y);
+    float getTableCellHeight(std::size_t x, std::size_t y);
 
     float toGlCoordX(float y);
     float toGlCoordY(float y);
@@ -74,6 +78,9 @@ private:
 
     bool shaderNeedsNewProjectionMatrix_;
 
+    std::shared_ptr<TextureAsset> tic_texture;
+    std::shared_ptr<TextureAsset> tac_texture;
+    std::shared_ptr<TextureAsset> toe_texture;
     std::unique_ptr<Shader> texture_shader_;
     std::vector<Model> models_;
 

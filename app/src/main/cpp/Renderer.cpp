@@ -116,7 +116,12 @@ float Renderer::toGlCoordY(float y) {
     return 2.f - 4.f * y / height_;
 }
 
-Model Renderer::makeTextureModel(float x, float y, float width, float height, const std::string & assetPath) {
+Model Renderer::makeTextureModel(std::size_t x_ind, std::size_t y_ind) {
+    float x = getTableCellX(x_ind, y_ind);
+    float y = getTableCellY(x_ind, y_ind);
+    float width = getTableCellWidth(x_ind, y_ind);
+    float height = getTableCellHeight(x_ind, y_ind);
+
     /*
      * This is a square:
      * 0 --- 1
@@ -139,15 +144,63 @@ Model Renderer::makeTextureModel(float x, float y, float width, float height, co
             0, 1, 2, 0, 2, 3
     };
 
-    // loads an image and assigns it to the square.
-    //
-    // Note: there is no texture management in this sample, so if you reuse an image be careful not
-    // to load it repeatedly. Since you get a shared_ptr you can safely reuse it in many models.
-    auto assetManager = app_->activity->assetManager;
-    auto spAndroidRobotTexture = TextureAsset::loadAsset(assetManager, assetPath.c_str());
-
     // Create a model and put it in the back of the render list.
-    return { vertices, indices, spAndroidRobotTexture };
+    switch (game_.getTableData().getCell(x_ind, y_ind)) {
+        case TIC:
+            return { vertices, indices, tic_texture };
+        case TAC:
+            return { vertices, indices, tac_texture };
+        case TOE:
+            return { vertices, indices, toe_texture };
+    }
+}
+
+float Renderer::getTableCellX(std::size_t x, std::size_t y) {
+    float padding = 40.f;
+    float game_table_width = std::min(width_, height_) - 2.f * padding;
+    float game_table_height = std::min(width_, height_) - 2.f * padding;
+    float game_table_x = padding;
+    float game_table_y = height_ / 2 - game_table_height / 2;
+    float dx = game_table_width / game_.getTableData().getWidth();
+    float dy = game_table_height / game_.getTableData().getHeight();
+
+    return game_table_x + dx * x;
+}
+
+float Renderer::getTableCellY(std::size_t x, std::size_t y) {
+    float padding = 40.f;
+    float game_table_width = std::min(width_, height_) - 2.f * padding;
+    float game_table_height = std::min(width_, height_) - 2.f * padding;
+    float game_table_x = padding;
+    float game_table_y = height_ / 2 - game_table_height / 2;
+    float dx = game_table_width / game_.getTableData().getWidth();
+    float dy = game_table_height / game_.getTableData().getHeight();
+
+    return game_table_y + dy * y;
+}
+
+float Renderer::getTableCellWidth(std::size_t x, std::size_t y) {
+    float padding = 40.f;
+    float game_table_width = std::min(width_, height_) - 2.f * padding;
+    float game_table_height = std::min(width_, height_) - 2.f * padding;
+    float game_table_x = padding;
+    float game_table_y = height_ / 2 - game_table_height / 2;
+    float dx = game_table_width / game_.getTableData().getWidth();
+    float dy = game_table_height / game_.getTableData().getHeight();
+
+    return dx;
+}
+
+float Renderer::getTableCellHeight(std::size_t x, std::size_t y) {
+    float padding = 40.f;
+    float game_table_width = std::min(width_, height_) - 2.f * padding;
+    float game_table_height = std::min(width_, height_) - 2.f * padding;
+    float game_table_x = padding;
+    float game_table_y = height_ / 2 - game_table_height / 2;
+    float dx = game_table_width / game_.getTableData().getWidth();
+    float dy = game_table_height / game_.getTableData().getHeight();
+
+    return dy;
 }
 
 void Renderer::render() {
@@ -190,31 +243,9 @@ void Renderer::render() {
     // Render top bar (result + restart button)
 
     // Render game table
-    float padding = 40.f;
-    float game_table_width = std::min(width_, height_) - 2.f * padding;
-    float game_table_height = std::min(width_, height_) - 2.f * padding;
-    float game_table_x = padding;
-    float game_table_y = height_ / 2 - game_table_height / 2;
-    float dx = game_table_width / game_.getTableData().getWidth();
-    float dy = game_table_height / game_.getTableData().getHeight();
-
     for (std::size_t x = 0; x < game_.getTableData().getWidth(); x++) {
         for (std::size_t y = 0; y < game_.getTableData().getHeight(); y++) {
-            std::string assetPath;
-
-            switch (game_.getTableData().getCell(x, y)) {
-                case TIC:
-                    assetPath = "tic.png";
-                    break;
-                case TAC:
-                    assetPath = "tac.png";
-                    break;
-                case TOE:
-                    assetPath = "toe.png";
-                    break;
-            }
-
-            Model model = makeTextureModel(game_table_x + dx * x, game_table_y + dy * y, dx, dy, assetPath);
+            Model model = makeTextureModel(x, y);
             texture_shader_->drawModel(model);
         }
     }
@@ -298,6 +329,12 @@ void Renderer::initRenderer() {
     PRINT_GL_STRING(GL_RENDERER);
     PRINT_GL_STRING(GL_VERSION);
     PRINT_GL_STRING_AS_LIST(GL_EXTENSIONS);
+
+
+    auto assetManager = app_->activity->assetManager;
+    this->tic_texture = TextureAsset::loadAsset(assetManager, "tic.png");
+    this->tac_texture = TextureAsset::loadAsset(assetManager, "tac.png");
+    this->toe_texture = TextureAsset::loadAsset(assetManager, "toe.png");
 
     texture_shader_ = std::unique_ptr<Shader>(
             Shader::loadShader(vertex, fragment, "inPosition", "inUV", "uProjection"));
