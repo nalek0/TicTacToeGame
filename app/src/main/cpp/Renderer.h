@@ -60,6 +60,7 @@ private:
      */
     void createModels();
 
+    Model makeTextureModel(float x, float y, float width, float height, int texture);
     Model makeTextureModel(std::size_t x, std::size_t y);
     float getTableCellX(std::size_t x, std::size_t y);
     float getTableCellY(std::size_t x, std::size_t y);
@@ -82,6 +83,9 @@ private:
     std::shared_ptr<TextureAsset> tic_texture;
     std::shared_ptr<TextureAsset> tac_texture;
     std::shared_ptr<TextureAsset> toe_texture;
+    std::shared_ptr<TextureAsset> tic_win_texture;
+    std::shared_ptr<TextureAsset> tac_win_texture;
+    std::shared_ptr<TextureAsset> draw_texture;
     std::unique_ptr<Shader> texture_shader_;
     std::vector<Model> models_;
 

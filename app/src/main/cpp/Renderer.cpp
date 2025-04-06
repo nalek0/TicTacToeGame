@@ -116,24 +116,17 @@ float Renderer::toGlCoordY(float y) {
     return 2.f - 4.f * y / height_;
 }
 
-Model Renderer::makeTextureModel(std::size_t x_ind, std::size_t y_ind) {
-    float x = getTableCellX(x_ind, y_ind);
-    float y = getTableCellY(x_ind, y_ind);
-    float width = getTableCellWidth(x_ind, y_ind);
-    float height = getTableCellHeight(x_ind, y_ind);
-
-    /*
-     * This is a square:
-     * 0 --- 1
-     * | \   |
-     * |  \  |
-     * |   \ |
-     * 3 --- 2
-     */
-    float xm = toGlCoordX(x);
-    float xp = toGlCoordX(x + width);
-    float ym = toGlCoordY(y);
-    float yp = toGlCoordY(y + height);
+#define TIC_TEXTURE     1
+#define TAC_TEXTURE     2
+#define TOE_TEXTURE     3
+#define TIC_WIN_TEXTURE 4
+#define TAC_WIN_TEXTURE 5
+#define DRAW_TEXTURE    6
+Model Renderer::makeTextureModel(float x, float y, float width, float height, int texture) {
+    float xm = toGlCoordX(x + width);
+    float xp = toGlCoordX(x);
+    float ym = toGlCoordY(y + height);
+    float yp = toGlCoordY(y);
     std::vector<Vertex> vertices = {
             Vertex(Vector3{xp, yp, 0}, Vector2{0, 0}), // 0
             Vertex(Vector3{xm, yp, 0}, Vector2{1, 0}), // 1
@@ -145,13 +138,37 @@ Model Renderer::makeTextureModel(std::size_t x_ind, std::size_t y_ind) {
     };
 
     // Create a model and put it in the back of the render list.
+    switch (texture) {
+        case TIC_TEXTURE:
+            return { vertices, indices, tic_texture };
+        case TAC_TEXTURE:
+            return { vertices, indices, tac_texture };
+        case TOE_TEXTURE:
+            return { vertices, indices, toe_texture };
+        case TIC_WIN_TEXTURE:
+            return { vertices, indices, tic_win_texture };
+        case TAC_WIN_TEXTURE:
+            return { vertices, indices, tac_win_texture };
+        case DRAW_TEXTURE:
+            return { vertices, indices, draw_texture };
+        default:
+            return { vertices, indices, toe_texture };
+    }
+}
+
+Model Renderer::makeTextureModel(std::size_t x_ind, std::size_t y_ind) {
+    float x = getTableCellX(x_ind, y_ind);
+    float y = getTableCellY(x_ind, y_ind);
+    float width = getTableCellWidth(x_ind, y_ind);
+    float height = getTableCellHeight(x_ind, y_ind);
+
     switch (game_.tableData.getCell(x_ind, y_ind)) {
         case TIC:
-            return { vertices, indices, tic_texture };
+            return makeTextureModel(x, y, width, height, TIC_TEXTURE);
         case TAC:
-            return { vertices, indices, tac_texture };
+            return makeTextureModel(x, y, width, height, TAC_TEXTURE);
         case TOE:
-            return { vertices, indices, toe_texture };
+            return makeTextureModel(x, y, width, height, TOE_TEXTURE);
     }
 }
 
@@ -248,6 +265,29 @@ void Renderer::render() {
     // configure it at the end of initRenderer
 
     // Render top bar (result + restart button)
+    TableState tableState = game_.tableData.getState();
+    switch (tableState) {
+        case TIC_WIN: {
+            Model model = makeTextureModel(0, 0, width_, 100.f, TIC_WIN);
+            texture_shader_->drawModel(model);
+
+            break;
+        }
+        case TAC_WIN: {
+            Model model = makeTextureModel(0, 0, width_, 100.f, TAC_WIN_TEXTURE);
+            texture_shader_->drawModel(model);
+
+            break;
+        }
+        case DRAW: {
+            Model model = makeTextureModel(0, 0, width_, 100.f, DRAW_TEXTURE);
+            texture_shader_->drawModel(model);
+
+            break;
+        }
+        case PLAYING:
+            break;
+    }
 
     // Render game table
     for (std::size_t x = 0; x < game_.tableData.getWidth(); x++) {
@@ -342,6 +382,9 @@ void Renderer::initRenderer() {
     this->tic_texture = TextureAsset::loadAsset(assetManager, "tic.png");
     this->tac_texture = TextureAsset::loadAsset(assetManager, "tac.png");
     this->toe_texture = TextureAsset::loadAsset(assetManager, "toe.png");
+    this->tic_win_texture = TextureAsset::loadAsset(assetManager, "tic_win.png");
+    this->tac_win_texture = TextureAsset::loadAsset(assetManager, "tac_win.png");
+    this->draw_texture = TextureAsset::loadAsset(assetManager, "draw.png");
 
     texture_shader_ = std::unique_ptr<Shader>(
             Shader::loadShader(vertex, fragment, "inPosition", "inUV", "uProjection"));
