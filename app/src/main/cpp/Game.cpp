@@ -173,3 +173,9 @@ CellState Game::eventState() {
     }
 }
 
+void Game::click(std::size_t x_ind, std::size_t y_ind) {
+    if (tableData.getCell(x_ind, y_ind) == TOE) {
+        tableData.setCell(x_ind, y_ind, eventState());
+    }
+}
+

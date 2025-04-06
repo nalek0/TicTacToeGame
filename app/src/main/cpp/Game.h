@@ -67,6 +67,7 @@ public:
 
     Game(android_app * app);
     CellState eventState();
+    void click(std::size_t x_ind, std::size_t y_ind);
 
 };
 

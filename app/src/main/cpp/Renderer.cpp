@@ -462,7 +462,7 @@ void Renderer::handleInput() {
                     for (std::size_t y_ind = 0; y_ind < game_.tableData.getHeight(); y_ind++) {
                         if (tableCellContains(x_ind, y_ind, x, y)) {
                             aout << " [" << x_ind << ", " << y_ind << "]";
-                            game_.tableData.setCell(x_ind, y_ind, game_.eventState());
+                            game_.click(x_ind, y_ind);
                         }
                     }
                 }
