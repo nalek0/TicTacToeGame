@@ -122,6 +122,7 @@ float Renderer::toGlCoordY(float y) {
 #define TIC_WIN_TEXTURE 4
 #define TAC_WIN_TEXTURE 5
 #define DRAW_TEXTURE    6
+#define RESTART_TEXTURE 7
 Model Renderer::makeTextureModel(float x, float y, float width, float height, int texture) {
     float xm = toGlCoordX(x + width);
     float xp = toGlCoordX(x);
@@ -151,6 +152,8 @@ Model Renderer::makeTextureModel(float x, float y, float width, float height, in
             return { vertices, indices, tac_win_texture };
         case DRAW_TEXTURE:
             return { vertices, indices, draw_texture };
+        case RESTART_TEXTURE:
+            return { vertices, indices, restart_texture };
         default:
             return { vertices, indices, toe_texture };
     }
@@ -264,23 +267,24 @@ void Renderer::render() {
     // order provided. But the sample EGL setup requests a 24 bit depth buffer so you could
     // configure it at the end of initRenderer
 
-    // Render top bar (result + restart button)
+    // Render top bar
+    float topBarHeight = 200.f;
     TableState tableState = game_.tableData.getState();
     switch (tableState) {
         case TIC_WIN: {
-            Model model = makeTextureModel(0, 0, width_, 100.f, TIC_WIN_TEXTURE);
+            Model model = makeTextureModel(width_ / 2 - 250.f, 0, 500.f, topBarHeight, TIC_WIN_TEXTURE);
             texture_shader_->drawModel(model);
 
             break;
         }
         case TAC_WIN: {
-            Model model = makeTextureModel(0, 0, width_, 100.f, TAC_WIN_TEXTURE);
+            Model model = makeTextureModel(width_ / 2 - 250.f, 0, 500.f, topBarHeight, TAC_WIN_TEXTURE);
             texture_shader_->drawModel(model);
 
             break;
         }
         case DRAW: {
-            Model model = makeTextureModel(0, 0, width_, 100.f, DRAW_TEXTURE);
+            Model model = makeTextureModel(width_ / 2 - 250.f, 0, 500.f, topBarHeight, DRAW_TEXTURE);
             texture_shader_->drawModel(model);
 
             break;
@@ -288,6 +292,15 @@ void Renderer::render() {
         case PLAYING:
             break;
     }
+
+    // Render restart button
+    float restartPadding = 25.f;
+    Model model = makeTextureModel(width_ - topBarHeight + restartPadding,
+                                   restartPadding,
+                                   topBarHeight - 2 * restartPadding,
+                                   topBarHeight - 2 * restartPadding,
+                                   RESTART_TEXTURE);
+    texture_shader_->drawModel(model);
 
     // Render game table
     for (std::size_t x = 0; x < game_.tableData.getWidth(); x++) {
@@ -385,6 +398,7 @@ void Renderer::initRenderer() {
     this->tic_win_texture = TextureAsset::loadAsset(assetManager, "tic_win.png");
     this->tac_win_texture = TextureAsset::loadAsset(assetManager, "tac_win.png");
     this->draw_texture = TextureAsset::loadAsset(assetManager, "draw.png");
+    this->restart_texture = TextureAsset::loadAsset(assetManager, "restart.png");
 
     texture_shader_ = std::unique_ptr<Shader>(
             Shader::loadShader(vertex, fragment, "inPosition", "inUV", "uProjection"));
@@ -436,6 +450,27 @@ void Renderer::handleInput() {
         return;
     }
 
+    // Add buttons
+    std::vector<RenderButton *> buttons;
+    for (std::size_t x = 0; x < game_.tableData.getWidth(); x++) {
+        for (std::size_t y = 0; y < game_.tableData.getHeight(); y++) {
+            auto b = new TableCellButton(getTableCellX(x, y),
+                                         getTableCellY(x, y),
+                                         getTableCellWidth(x, y),
+                                         getTableCellHeight(x, y),
+                                         x, y);
+            buttons.push_back(b);
+        }
+    }
+
+    auto topBarHeight = 200.f;
+    auto restartPadding = 25.f;
+    auto b = new RestartButton(width_ - topBarHeight + restartPadding,
+                               restartPadding,
+                               topBarHeight - 2 * restartPadding,
+                               topBarHeight - 2 * restartPadding);
+    buttons.push_back(b);
+
     // handle motion events (motionEventsCounts can be 0).
     for (auto i = 0; i < inputBuffer->motionEventsCount; i++) {
         auto &motionEvent = inputBuffer->motionEvents[i];
@@ -458,12 +493,9 @@ void Renderer::handleInput() {
                 aout << "(" << pointer.id << ", " << x << ", " << y << ") "
                      << "Pointer Down";
 
-                for (std::size_t x_ind = 0; x_ind < game_.tableData.getWidth(); x_ind++) {
-                    for (std::size_t y_ind = 0; y_ind < game_.tableData.getHeight(); y_ind++) {
-                        if (tableCellContains(x_ind, y_ind, x, y)) {
-                            aout << " [" << x_ind << ", " << y_ind << "]";
-                            game_.click(x_ind, y_ind);
-                        }
+                for (RenderButton * button : buttons) {
+                    if (button->contains(x, y)) {
+                        button->onClick((void *) &game_);
                     }
                 }
 
@@ -524,4 +556,8 @@ void Renderer::handleInput() {
     }
     // clear the key input count too.
     android_app_clear_key_events(inputBuffer);
+
+    for (RenderButton * button : buttons) {
+        delete button;
+    }
 }

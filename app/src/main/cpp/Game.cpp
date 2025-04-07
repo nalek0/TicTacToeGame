@@ -7,16 +7,37 @@
 #include <string>
 #include "Game.h"
 
-TableCell::TableCell() {
-    this->_state = CellState::TOE;
-}
-
 CellState TableCell::getState() {
     return this->_state;
 }
 
 void TableCell::setState(CellState state) {
     this->_state = state;
+}
+
+bool TableCellButton::contains(float x, float y) {
+    return x_ < x
+           && x_ + width_ > x
+           && y_ < y
+           && y_ + height_> y;
+}
+
+void TableCellButton::onClick(void * context) {
+    Game * context_game = reinterpret_cast<Game *>(context);
+
+    context_game->click(x_ind_, y_ind_);
+}
+
+bool RestartButton::contains(float x, float y) {
+    return x_ < x
+           && x_ + width_ > x
+           && y_ < y
+           && y_ + height_> y;
+}
+
+void RestartButton::onClick(void * context) {
+    Game * context_game = reinterpret_cast<Game *>(context);
+    context_game->restart();
 }
 
 TableData::TableData() { }
@@ -179,3 +200,10 @@ void Game::click(std::size_t x_ind, std::size_t y_ind) {
     }
 }
 
+void Game::restart() {
+    for (std::size_t x = 0; x < tableData.getWidth(); x++) {
+        for (std::size_t y = 0; y < tableData.getHeight(); y++) {
+            tableData.setCell(x, y, TOE);
+        }
+    }
+}
