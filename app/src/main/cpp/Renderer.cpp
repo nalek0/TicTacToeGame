@@ -310,7 +310,22 @@ void Renderer::render() {
         }
     }
 
-    // Render bottom bar (set up table size)
+    { // Render bottom bar (set up table size)
+        auto bottomBarHeight = 200.f;
+        auto buttonPadding = 25.f;
+        auto decreaseModel = makeTextureModel(buttonPadding,
+                                              height_ - bottomBarHeight + buttonPadding,
+                                              width_ / 2 - 2 * buttonPadding,
+                                              bottomBarHeight - 2 * buttonPadding,
+                                              TOE_TEXTURE);
+        auto increaseModel = makeTextureModel(buttonPadding + width_ / 2,
+                                              height_ - bottomBarHeight + buttonPadding,
+                                              width_ / 2 - 2 * buttonPadding,
+                                              bottomBarHeight - 2 * buttonPadding,
+                                              TOE_TEXTURE);
+        texture_shader_->drawModel(decreaseModel);
+        texture_shader_->drawModel(increaseModel);
+    }
 
     // Present the rendered image. This is an implicit glFlush.
     auto swapResult = eglSwapBuffers(display_, surface_);
@@ -452,24 +467,45 @@ void Renderer::handleInput() {
 
     // Add buttons
     std::vector<RenderButton *> buttons;
-    for (std::size_t x = 0; x < game_.tableData.getWidth(); x++) {
-        for (std::size_t y = 0; y < game_.tableData.getHeight(); y++) {
-            auto b = new TableCellButton(getTableCellX(x, y),
-                                         getTableCellY(x, y),
-                                         getTableCellWidth(x, y),
-                                         getTableCellHeight(x, y),
-                                         x, y);
-            buttons.push_back(b);
+    {
+        for (std::size_t x = 0; x < game_.tableData.getWidth(); x++) {
+            for (std::size_t y = 0; y < game_.tableData.getHeight(); y++) {
+                auto b = new TableCellButton(getTableCellX(x, y),
+                                             getTableCellY(x, y),
+                                             getTableCellWidth(x, y),
+                                             getTableCellHeight(x, y),
+                                             x, y);
+                buttons.push_back(b);
+            }
         }
     }
 
-    auto topBarHeight = 200.f;
-    auto restartPadding = 25.f;
-    auto b = new RestartButton(width_ - topBarHeight + restartPadding,
-                               restartPadding,
-                               topBarHeight - 2 * restartPadding,
-                               topBarHeight - 2 * restartPadding);
-    buttons.push_back(b);
+    {
+        auto topBarHeight = 200.f;
+        auto restartPadding = 25.f;
+        auto b = new RestartButton(width_ - topBarHeight + restartPadding,
+                                   restartPadding,
+                                   topBarHeight - 2 * restartPadding,
+                                   topBarHeight - 2 * restartPadding);
+        buttons.push_back(b);
+    }
+
+    {
+        auto bottomBarHeight = 200.f;
+        auto buttonPadding = 25.f;
+        auto decreaseButton = new ChangeLevelButton(buttonPadding,
+                                                    height_ - bottomBarHeight + buttonPadding,
+                                                    width_ / 2 - 2 * buttonPadding,
+                                                    bottomBarHeight - 2 * buttonPadding,
+                                                    -1);
+        auto increaseButton = new ChangeLevelButton(buttonPadding + width_ / 2,
+                                                    height_ - bottomBarHeight + buttonPadding,
+                                                    width_ / 2 - 2 * buttonPadding,
+                                                    bottomBarHeight - 2 * buttonPadding,
+                                                    +1);
+        buttons.push_back(decreaseButton);
+        buttons.push_back(increaseButton);
+    }
 
     // handle motion events (motionEventsCounts can be 0).
     for (auto i = 0; i < inputBuffer->motionEventsCount; i++) {

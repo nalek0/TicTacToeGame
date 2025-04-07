@@ -58,8 +58,19 @@ public:
 
 };
 
-#define TABLE_SIZE 3
-#define WIN_LENGTH 3
+class ChangeLevelButton : public RenderButton {
+private:
+    float x_, y_, width_, height_;
+    int levelDiff_;
+public:
+
+    ChangeLevelButton(float x, float y, float width, float height, int levelDiff) :
+            x_(x), y_(y), width_(width), height_(height), levelDiff_(levelDiff) { }
+
+    bool contains(float x, float y);
+    void onClick(void * context);
+
+};
 
 enum TableState {
     TIC_WIN,
@@ -70,12 +81,11 @@ enum TableState {
 
 class TableData {
 private:
-    std::array<std::array<TableCell, TABLE_SIZE>, TABLE_SIZE> _table;
-    android_app * app_;
+    std::vector<std::vector<TableCell>> _table;
+    std::size_t width_, height_, win_length_;
 public:
 
-    TableData();
-    TableData(android_app * app);
+    TableData(int level);
 
     TableState getState();
 
@@ -89,6 +99,7 @@ public:
 
 class Game {
 private:
+    int level_;
     std::size_t step_;
     android_app * app_;
 public:
@@ -98,6 +109,7 @@ public:
     CellState eventState();
     void click(std::size_t x_ind, std::size_t y_ind);
     void restart();
+    void addLevel(int levelDiff);
 
 };
 
