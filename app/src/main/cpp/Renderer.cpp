@@ -123,6 +123,8 @@ float Renderer::toGlCoordY(float y) {
 #define TAC_WIN_TEXTURE 5
 #define DRAW_TEXTURE    6
 #define RESTART_TEXTURE 7
+#define LEVEL_INC_TEXTURE 8
+#define LEVEL_DEC_TEXTURE 9
 Model Renderer::makeTextureModel(float x, float y, float width, float height, int texture) {
     float xm = toGlCoordX(x + width);
     float xp = toGlCoordX(x);
@@ -154,6 +156,10 @@ Model Renderer::makeTextureModel(float x, float y, float width, float height, in
             return { vertices, indices, draw_texture };
         case RESTART_TEXTURE:
             return { vertices, indices, restart_texture };
+        case LEVEL_INC_TEXTURE:
+            return { vertices, indices, level_inc_texture };
+        case LEVEL_DEC_TEXTURE:
+            return { vertices, indices, level_dec_texture };
         default:
             return { vertices, indices, toe_texture };
     }
@@ -312,17 +318,17 @@ void Renderer::render() {
 
     { // Render bottom bar (set up table size)
         auto bottomBarHeight = 200.f;
-        auto buttonPadding = 25.f;
+        auto buttonPadding = 40.f;
         auto decreaseModel = makeTextureModel(buttonPadding,
                                               height_ - bottomBarHeight + buttonPadding,
                                               width_ / 2 - 2 * buttonPadding,
                                               bottomBarHeight - 2 * buttonPadding,
-                                              TOE_TEXTURE);
+                                              LEVEL_DEC_TEXTURE);
         auto increaseModel = makeTextureModel(buttonPadding + width_ / 2,
                                               height_ - bottomBarHeight + buttonPadding,
                                               width_ / 2 - 2 * buttonPadding,
                                               bottomBarHeight - 2 * buttonPadding,
-                                              TOE_TEXTURE);
+                                              LEVEL_INC_TEXTURE);
         texture_shader_->drawModel(decreaseModel);
         texture_shader_->drawModel(increaseModel);
     }
@@ -414,6 +420,8 @@ void Renderer::initRenderer() {
     this->tac_win_texture = TextureAsset::loadAsset(assetManager, "tac_win.png");
     this->draw_texture = TextureAsset::loadAsset(assetManager, "draw.png");
     this->restart_texture = TextureAsset::loadAsset(assetManager, "restart.png");
+    this->level_inc_texture = TextureAsset::loadAsset(assetManager, "level_inc.png");
+    this->level_dec_texture = TextureAsset::loadAsset(assetManager, "level_dec.png");
 
     texture_shader_ = std::unique_ptr<Shader>(
             Shader::loadShader(vertex, fragment, "inPosition", "inUV", "uProjection"));
@@ -492,7 +500,7 @@ void Renderer::handleInput() {
 
     {
         auto bottomBarHeight = 200.f;
-        auto buttonPadding = 25.f;
+        auto buttonPadding = 40.f;
         auto decreaseButton = new ChangeLevelButton(buttonPadding,
                                                     height_ - bottomBarHeight + buttonPadding,
                                                     width_ / 2 - 2 * buttonPadding,

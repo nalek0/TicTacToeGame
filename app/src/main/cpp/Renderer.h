@@ -87,6 +87,8 @@ private:
     std::shared_ptr<TextureAsset> tac_win_texture;
     std::shared_ptr<TextureAsset> draw_texture;
     std::shared_ptr<TextureAsset> restart_texture;
+    std::shared_ptr<TextureAsset> level_inc_texture;
+    std::shared_ptr<TextureAsset> level_dec_texture;
     std::unique_ptr<Shader> texture_shader_;
     std::vector<RenderButton> buttons_;
 
